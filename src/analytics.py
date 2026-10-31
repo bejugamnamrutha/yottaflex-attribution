@@ -12,18 +12,48 @@ def load_frames(db_path):
     return frames
 
 def campaign_roi(frames, model="linear"):
-    camps=frames["Campaign"].copy()
-    costs=frames["CostRecord"].copy()
-    # Currency mismatch is visible but excluded from the USD ROI calculation.
-    costs=costs[(costs.currency=="USD") & (costs.issue_type.fillna("")=="")]
-    spend=costs.groupby("campaign_id",as_index=False).amount.sum().rename(columns={"amount":"spend"})
-    attr=frames["AttributionResult"]
-    attr=attr[attr.model==model].groupby("campaign_id",as_index=False).attributed_revenue.sum().rename(columns={"attributed_revenue":"attributed_revenue"})
-    result=camps.merge(spend,on="campaign_id",how="left").merge(attr,on="campaign_id",how="left")
-    result[["spend","attributed_revenue"]]=result[["spend","attributed_revenue"]].fillna(0)
-    result["roi"]=((result.attributed_revenue-result.spend)/result.spend).where(result.spend>0)
-    result["roas"]=(result.attributed_revenue/result.spend).where(result.spend>0)
-    result["missing_cost_flag"]=result.spend.eq(0)
+    camps = frames["Campaign"].copy()
+    costs = frames["CostRecord"].copy()
+
+    # Include only valid USD costs.
+    valid_costs = costs[
+        (costs["currency"] == "USD") &
+        (costs["issue_type"].fillna("") == "")
+    ]
+
+    spend = (
+        valid_costs.groupby("campaign_id", as_index=False)["amount"]
+        .sum()
+        .rename(columns={"amount": "spend"})
+    )
+
+    # Calculate attributed revenue for the selected model.
+    attr = frames["AttributionResult"]
+    attr = attr[attr["model"] == model]
+
+    attr = (
+        attr.groupby("campaign_id", as_index=False)["attributed_revenue"]
+        .sum()
+    )
+
+    result = (
+        camps.merge(spend, on="campaign_id", how="left")
+        .merge(attr, on="campaign_id", how="left")
+    )
+
+    # Missing costs remain missing instead of being treated as zero.
+    result["missing_cost_flag"] = result["spend"].isna()
+
+    # Calculate ROI only when valid spend exists.
+    result["roi"] = (
+        (result["attributed_revenue"] - result["spend"]) /
+        result["spend"]
+    ).where(result["spend"] > 0)
+
+    result["roas"] = (
+        result["attributed_revenue"] / result["spend"]
+    ).where(result["spend"] > 0)
+
     return result
 
 def model_summary(frames):
@@ -37,15 +67,46 @@ def funnel_metrics(frames):
             "duplicate_order_refs":int(frames["Order"].external_order_ref.duplicated().sum())}
 
 def exception_report(frames):
-    t=frames["Touchpoint"]; o=frames["Opportunity"]
-    post=t.merge(o[["contact_id","closed_at"]],on="contact_id",how="inner")
-    post=post[(post.closed_at.notna())&(post.closed_at!="")&(post.occurred_at>post.closed_at)]
-    costs=frames["CostRecord"]
+    t = frames["Touchpoint"]
+    o = frames["Opportunity"]
+    costs = frames["CostRecord"]
+    campaigns = frames["Campaign"]
+    orders = frames["Order"]
+
+    # Find touchpoints that happened after an opportunity was won.
+    post = t.merge(
+        o[["contact_id", "closed_at"]],
+        on="contact_id",
+        how="inner"
+    )
+
+    post = post[
+        (post["closed_at"].notna()) &
+        (post["closed_at"] != "") &
+        (post["occurred_at"] > post["closed_at"])
+    ]
+
+    # Identify campaigns without any cost record.
+    campaigns_with_cost = set(costs["campaign_id"])
+    missing_cost_campaigns = campaigns[
+        ~campaigns["campaign_id"].isin(campaigns_with_cost)
+    ]
+
     return {
-      "post_conversion_touchpoints":int(post.touchpoint_id.nunique()),
-      "currency_mismatch_costs":int((costs.currency!="USD").sum()),
-      "zero_or_omitted_cost_records":int(((costs.amount==0)|(costs.issue_type=="cost_omitted")).sum()),
-      "duplicate_revenue_rows":int(frames["Order"].external_order_ref.duplicated().sum()),
-      "anonymous_sessions":int(((frames["WebSession"].contact_id.isna())|(frames["WebSession"].contact_id=="")).sum()),
-      "unresolved_leads":int(((frames["Lead"].contact_id.isna())|(frames["Lead"].contact_id=="")).sum())
+        "post_conversion_touchpoints": int(post["touchpoint_id"].nunique()),
+        "currency_mismatch_costs": int((costs["currency"] != "USD").sum()),
+        "duplicate_revenue_rows": int(
+            orders["external_order_ref"].duplicated().sum()
+        ),
+        "anonymous_sessions": int(
+            ((frames["WebSession"]["contact_id"].isna()) |
+             (frames["WebSession"]["contact_id"] == "")).sum()
+        ),
+        "unresolved_leads": int(
+            ((frames["Lead"]["contact_id"].isna()) |
+             (frames["Lead"]["contact_id"] == "")).sum()
+        ),
+        "campaigns_missing_cost_records": int(
+            missing_cost_campaigns["campaign_id"].nunique()
+        )
     }

@@ -114,10 +114,20 @@ def generate(out_dir="data", scale="starter", seed=SEED, config_path="config.jso
             lid=f"LEAD-ANOM-000001"
             leads.append({"lead_id":lid,"contact_id":"","session_id":anon["session_id"],"created_at":anon["started_at"],"status":"new"})
             label("anonymous_session_link","Lead",lid,"Do not resolve identity without evidence; keep identity link unresolved")
-    # Event history: append-only lifecycle examples.
-    for i,o in enumerate(opps,1):
-        events.append({"event_id":f"EVT-{i:07d}","entity_type":"Opportunity","entity_id":o["opportunity_id"],"event_type":"stage_changed","event_at":o["created_at"],"old_value":"new","new_value":"qualified","reason":"Synthetic lifecycle transition"})
-        tables = {
+        # Event history: append-only lifecycle examples.
+    for i, o in enumerate(opps, 1):
+        events.append({
+            "event_id": f"EVT-{i:07d}",
+            "entity_type": "Opportunity",
+            "entity_id": o["opportunity_id"],
+            "event_type": "stage_changed",
+            "event_at": o["created_at"],
+            "old_value": "new",
+            "new_value": "qualified",
+            "reason": "Synthetic lifecycle transition"
+        })
+
+    tables = {
         "Channel": channels,
         "Campaign": campaigns,
         "Creative": creatives,
@@ -132,7 +142,6 @@ def generate(out_dir="data", scale="starter", seed=SEED, config_path="config.jso
         "CostRecord": costs,
         "EventHistory": events
     }
-
     # Chronological 80/20 split based on opportunity creation date.
     sorted_opps = sorted(
         opps,
@@ -184,7 +193,7 @@ def generate(out_dir="data", scale="starter", seed=SEED, config_path="config.jso
     # Export CSVs and a JSON bundle.
     for name,rows in tables.items(): write_csv(out/f"{name}.csv",rows)
     (out/"ground_truth.json").write_text(json.dumps(ground,indent=2))
-    # Attribution models, based on eligible touches up to won order date.
+        # Attribution models, based on eligible touches up to won order date.
     by_contact = defaultdict(list)
 
     for t in touchpoints:
@@ -192,35 +201,82 @@ def generate(out_dir="data", scale="starter", seed=SEED, config_path="config.jso
 
     results = []
     calc = iso(datetime(2026, 10, 31, tzinfo=timezone.utc))
+
+    # Deduplicate orders using external_order_ref.
     revenue_by_opp = {}
-    # Deduplicate orders using external reference, and keep USD revenue only.
+    seen_external_order_refs = set()
+
     for order in orders:
-        if order["issue_type"] or order["currency"]!="USD": continue
-        revenue_by_opp.setdefault(order["opportunity_id"],order["revenue"])
+        if order["currency"] != "USD":
+            continue
+
+        if order["issue_type"]:
+            continue
+
+        external_ref = order["external_order_ref"]
+
+        if not external_ref or external_ref in seen_external_order_refs:
+            continue
+
+        seen_external_order_refs.add(external_ref)
+
+        revenue_by_opp.setdefault(
+            order["opportunity_id"],
+            order["revenue"]
+        )
+
+    # Apply the four attribution models.
     for o in opps:
-        rev=revenue_by_opp.get(o["opportunity_id"])
-        if rev is None: continue
-        cutoff=o["closed_at"]
-        eligible=[t for t in by_contact[o["contact_id"]] if t["occurred_at"]<=cutoff and not t["issue_type"]]
-        eligible.sort(key=lambda x:x["occurred_at"])
-        if not eligible: continue
-        model_credits={}
-        model_credits["first_touch"]={eligible[0]["campaign_id"]:1.0}
-        model_credits["last_touch"]={eligible[-1]["campaign_id"]:1.0}
-        # Linear: distribute equally across unique campaign touches.
-        unique=list(dict.fromkeys(t["campaign_id"] for t in eligible))
-        model_credits["linear"]={cid:1/len(unique) for cid in unique}
-        # Position-based: 40% first, 40% last, 20% evenly among middle; if one touch = 100%.
-        if len(unique)==1: pos={unique[0]:1.0}
-        elif len(unique)==2: pos={unique[0]:.5,unique[-1]:.5}
+        rev = revenue_by_opp.get(o["opportunity_id"])
+
+        if rev is None or not o["closed_at"]:
+            continue
+
+        cutoff = o["closed_at"]
+
+        eligible = [
+            t for t in by_contact[o["contact_id"]]
+            if t["occurred_at"] <= cutoff and not t["issue_type"]
+        ]
+
+        eligible.sort(key=lambda x: x["occurred_at"])
+
+        if not eligible:
+            continue
+
+        model_credits = {}
+        model_credits["first_touch"] = {eligible[0]["campaign_id"]: 1.0}
+        model_credits["last_touch"] = {eligible[-1]["campaign_id"]: 1.0}
+
+        unique = list(dict.fromkeys(t["campaign_id"] for t in eligible))
+        model_credits["linear"] = {
+            cid: 1 / len(unique) for cid in unique
+        }
+
+        if len(unique) == 1:
+            pos = {unique[0]: 1.0}
+        elif len(unique) == 2:
+            pos = {unique[0]: 0.5, unique[-1]: 0.5}
         else:
-            pos={unique[0]:.4,unique[-1]:.4}
-            for cid in unique[1:-1]: pos[cid]=.2/(len(unique)-2)
-        model_credits["position_based"]=pos
-        for model,credits in model_credits.items():
-            for cid,credit in credits.items():
-                results.append({"result_id":f"ATR-{len(results)+1:09d}","opportunity_id":o["opportunity_id"],"campaign_id":cid,"model":model,"credit":round(credit,10),"attributed_revenue":round(rev*credit,2),"calculated_at":calc})
-    write_csv(out/"AttributionResult.csv",results)
+            pos = {unique[0]: 0.4, unique[-1]: 0.4}
+            for cid in unique[1:-1]:
+                pos[cid] = 0.2 / (len(unique) - 2)
+
+        model_credits["position_based"] = pos
+
+        for model, credits in model_credits.items():
+            for cid, credit in credits.items():
+                results.append({
+                    "result_id": f"ATR-{len(results)+1:09d}",
+                    "opportunity_id": o["opportunity_id"],
+                    "campaign_id": cid,
+                    "model": model,
+                    "credit": round(credit, 10),
+                    "attributed_revenue": round(rev * credit, 2),
+                    "calculated_at": calc
+                })
+
+    write_csv(out / "AttributionResult.csv", results)
     # SQL seed database.
     db=out/"attribution.db"
     if db.exists(): db.unlink()
@@ -251,12 +307,31 @@ def validate(out_dir):
     for table,key in [("Campaign","campaign_id"),("Contact","contact_id"),("Touchpoint","touchpoint_id"),("Opportunity","opportunity_id"),("Lead","lead_id"),("WebSession","session_id"),("Order","order_id")]:
         checks[f"{table}_duplicate_primary_keys"]=con.execute(f'SELECT COUNT(*)-COUNT(DISTINCT {key}) FROM "{table}"').fetchone()[0]
     checks["touchpoints_missing_campaign"]=con.execute("SELECT COUNT(*) FROM Touchpoint t LEFT JOIN Campaign c USING(campaign_id) WHERE c.campaign_id IS NULL").fetchone()[0]
-    checks["won_opportunities_without_order"]=con.execute("SELECT COUNT(*) FROM Opportunity o WHERE stage='closed_won' AND NOT EXISTS(SELECT 1 FROM 'Order' r WHERE r.opportunity_id=o.opportunity_id)").fetchone()[0]
+    checks["won_opportunities_without_order"] = con.execute(
+    'SELECT COUNT(*) FROM Opportunity o '
+    'WHERE stage = "closed_won" '
+    'AND NOT EXISTS (SELECT 1 FROM "Order" r '
+    'WHERE r.opportunity_id = o.opportunity_id)'
+).fetchone()[0]
     checks["attribution_credit_sum_errors"]=con.execute("""SELECT COUNT(*) FROM (SELECT opportunity_id,model,ROUND(SUM(credit),6) s FROM AttributionResult GROUP BY opportunity_id,model HAVING ABS(s-1)>0.00001)""").fetchone()[0]
     checks["attribution_without_eligible_touch"]=con.execute("""SELECT COUNT(*) FROM AttributionResult ar JOIN Opportunity o USING(opportunity_id) WHERE NOT EXISTS (SELECT 1 FROM Touchpoint t WHERE t.contact_id=o.contact_id AND t.campaign_id=ar.campaign_id AND t.occurred_at<=o.closed_at AND (t.issue_type IS NULL OR t.issue_type=''))""").fetchone()[0]
     con.close()
     checks["ground_truth_cases"]=len(json.loads((out/"ground_truth.json").read_text()))
-    checks["passed"]=not checks["foreign_key_violations"] and all(v==0 for k,v in checks.items() if k.endswith(("duplicate_primary_keys","missing_campaign","without_order","sum_errors","after_conversion")))
+    checks["passed"] = (
+    not checks["foreign_key_violations"]
+    and all(
+        v == 0
+        for k, v in checks.items()
+        if k.endswith((
+            "duplicate_primary_keys",
+            "missing_campaign",
+            "without_order",
+            "sum_errors",
+            "after_conversion",
+            "eligible_touch"
+        ))
+    )
+)
     return checks
 
 if __name__=="__main__":
