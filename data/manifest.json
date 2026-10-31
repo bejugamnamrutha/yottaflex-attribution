@@ -1,0 +1,39 @@
+{
+  "seed": 20261022,
+  "scale": "full",
+  "generated_at_utc": "2027-03-12T00:00:00Z",
+  "counts": {
+    "Channel": 9,
+    "Campaign": 500,
+    "Creative": 500,
+    "Audience": 12,
+    "Contact": 50000,
+    "CampaignAudience": 500,
+    "Touchpoint": 200001,
+    "WebSession": 25000,
+    "Lead": 10001,
+    "Opportunity": 10000,
+    "Order": 7131,
+    "CostRecord": 500,
+    "EventHistory": 10000,
+    "AttributionResult": 50198
+  },
+  "files": {
+    "attribution.db": "3080b9576a1f4968b6996a786900beaeded8033ee7b1f96d0149a0648e4f8cd7",
+    "AttributionResult.csv": "63d92d9700f804ed58387c45db8a059cd292aed75ccf3a49526976dd24620ee6",
+    "Audience.csv": "13508910ebd6ab8c9957ad54e965047ecb8dc5467111923bdf125d8a611d88b1",
+    "Campaign.csv": "637f8fb3b867b2e717ff27170b97198caa0ece08f5f5a7921f816d444730c0b3",
+    "CampaignAudience.csv": "052de36f61534e427bf5ebeecb7efa6e4e83ad47d78c7498464004d3548f71e7",
+    "Channel.csv": "b66571194c1147e72a7469c18390ebcd9ff607f8345fa41adcae0d087457ba92",
+    "Contact.csv": "a9111a1f0e2c049558ed1eada9518880330e14b22063fcaf8b5c7ff711090858",
+    "CostRecord.csv": "933e9acfd4159810f3ef7b31b94e6b2d3a6afde9ae70e4ec1be3d06ac2dee173",
+    "Creative.csv": "bcf25c722c8b6dd40ee895a29e7b6e22587a54215c3bedf94672d07a64cb9e03",
+    "EventHistory.csv": "9f912e0f315fed5c094847fef1120baaaf398bb978f73a67351e8ce002a786dd",
+    "ground_truth.json": "b1277bce6bc67141b4f095a59f27b59dbada5299914912bd7182021e943a9a56",
+    "Lead.csv": "1f3c4f35e54fcd4c3d6ffdfd8b5080140f6f441af37ccb75922e7ca64fcb9179",
+    "Opportunity.csv": "af13817a25e563efc760ab407ce7c30664821270ba99dac7c1d1ba2dca841d33",
+    "Order.csv": "9cfab5307a99337c7542b580ace9cff38a47604df4fcc584bdcb4c73a6b296f4",
+    "Touchpoint.csv": "4f73b4cf2821a39678e440ef923e7bd7bea0543899c12d42ac1ed3ab43af61f5",
+    "WebSession.csv": "9f87d56582454d949a8d6786a73e3a9d5db049617045b9446703ff070e65c865"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "foreign_key_violations": [],
+  "Campaign_duplicate_primary_keys": 0,
+  "Contact_duplicate_primary_keys": 0,
+  "Touchpoint_duplicate_primary_keys": 0,
+  "Opportunity_duplicate_primary_keys": 0,
+  "Lead_duplicate_primary_keys": 0,
+  "WebSession_duplicate_primary_keys": 0,
+  "Order_duplicate_primary_keys": 0,
+  "touchpoints_missing_campaign": 0,
+  "won_opportunities_without_order": 0,
+  "attribution_credit_sum_errors": 0,
+  "attribution_without_eligible_touch": 0,
+  "ground_truth_cases": 5,
+  "passed": true
+}

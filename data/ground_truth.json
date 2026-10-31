@@ -1,0 +1,37 @@
+[
+  {
+    "case_id": "GT-0001",
+    "issue_type": "duplicate_revenue",
+    "entity_type": "Order",
+    "entity_id": "ORD-ANOM-000001",
+    "expected_decision": "Deduplicate by external_order_ref; do not count revenue twice"
+  },
+  {
+    "case_id": "GT-0002",
+    "issue_type": "post_conversion_touch",
+    "entity_type": "Touchpoint",
+    "entity_id": "TOUCH-ANOM-000001",
+    "expected_decision": "Exclude from attribution because it occurs after conversion"
+  },
+  {
+    "case_id": "GT-0003",
+    "issue_type": "currency_mismatch",
+    "entity_type": "CostRecord",
+    "entity_id": "COST-ANOM-000001",
+    "expected_decision": "Exclude from USD ROI until converted with an approved FX rate"
+  },
+  {
+    "case_id": "GT-0004",
+    "issue_type": "campaign_cost_omitted",
+    "entity_type": "Campaign",
+    "entity_id": "CMP-2026-000002",
+    "expected_decision": "Campaign has no cost record; flag spend as missing and do not interpret ROI as zero-cost success"
+  },
+  {
+    "case_id": "GT-0005",
+    "issue_type": "anonymous_session_link",
+    "entity_type": "Lead",
+    "entity_id": "LEAD-ANOM-000001",
+    "expected_decision": "Do not resolve identity without evidence; keep identity link unresolved"
+  }
+]

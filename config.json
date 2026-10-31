@@ -1,0 +1,15 @@
+{
+  "seed": 20261022,
+  "scale": {
+    "campaigns": 500,
+    "contacts": 50000,
+    "touchpoints": 200000,
+    "opportunities": 10000
+  },
+  "starter_scale": {
+    "campaigns": 20,
+    "contacts": 1000,
+    "touchpoints": 4000,
+    "opportunities": 200
+  }
+}

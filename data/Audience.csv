@@ -1,0 +1,13 @@
+audience_id,name,audience_type
+AUD-001,Audience 1,prospecting
+AUD-002,Audience 2,retargeting
+AUD-003,Audience 3,customer
+AUD-004,Audience 4,lookalike
+AUD-005,Audience 5,prospecting
+AUD-006,Audience 6,retargeting
+AUD-007,Audience 7,customer
+AUD-008,Audience 8,lookalike
+AUD-009,Audience 9,prospecting
+AUD-010,Audience 10,retargeting
+AUD-011,Audience 11,customer
+AUD-012,Audience 12,lookalike
