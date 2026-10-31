@@ -1,5 +1,20 @@
+
 venv/
 .venv/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Generated full-scale data exports
+data/*.csv
+data/*.json
+data/*.db
+
+# Keep important evaluation and documentation files
+!data/ground_truth.csv
+!data/ground_truth.json
+!data/manifest.json
+!data/validation_summary.json
+
+# Keep the SQL schema
+!data/schema.sql

@@ -25,13 +25,13 @@
     "issue_type": "campaign_cost_omitted",
     "entity_type": "Campaign",
     "entity_id": "CMP-2026-000002",
-    "expected_decision": "Campaign has no cost record; flag spend as missing and do not interpret ROI as zero-cost success"
+    "expected_decision": "Flag spend as missing; do not interpret ROI as zero-cost success"
   },
   {
     "case_id": "GT-0005",
     "issue_type": "anonymous_session_link",
     "entity_type": "Lead",
     "entity_id": "LEAD-ANOM-000001",
-    "expected_decision": "Do not resolve identity without evidence; keep identity link unresolved"
+    "expected_decision": "Do not resolve identity without evidence; keep identity unresolved"
   }
 ]

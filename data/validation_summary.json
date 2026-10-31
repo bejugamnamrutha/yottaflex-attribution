@@ -11,6 +11,7 @@
   "won_opportunities_without_order": 0,
   "attribution_credit_sum_errors": 0,
   "attribution_without_eligible_touch": 0,
+  "post_conversion_attribution_errors": 0,
   "ground_truth_cases": 5,
   "passed": true
 }

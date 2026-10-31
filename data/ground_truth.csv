@@ -1,0 +1,6 @@
+case_id,issue_type,entity_type,entity_id,expected_decision
+GT-0001,duplicate_revenue,Order,ORD-ANOM-000001,Deduplicate by external_order_ref; do not count revenue twice
+GT-0002,post_conversion_touch,Touchpoint,TOUCH-ANOM-000001,Exclude from attribution because it occurs after conversion
+GT-0003,currency_mismatch,CostRecord,COST-ANOM-000001,Exclude from USD ROI until converted with an approved FX rate
+GT-0004,campaign_cost_omitted,Campaign,CMP-2026-000002,Flag spend as missing; do not interpret ROI as zero-cost success
+GT-0005,anonymous_session_link,Lead,LEAD-ANOM-000001,Do not resolve identity without evidence; keep identity unresolved
