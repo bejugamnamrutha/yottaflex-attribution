@@ -117,15 +117,82 @@ def generate(out_dir="data", scale="starter", seed=SEED, config_path="config.jso
     # Event history: append-only lifecycle examples.
     for i,o in enumerate(opps,1):
         events.append({"event_id":f"EVT-{i:07d}","entity_type":"Opportunity","entity_id":o["opportunity_id"],"event_type":"stage_changed","event_at":o["created_at"],"old_value":"new","new_value":"qualified","reason":"Synthetic lifecycle transition"})
-    tables={"Channel":channels,"Campaign":campaigns,"Creative":creatives,"Audience":audiences,"Contact":contacts,"CampaignAudience":campaud,"Touchpoint":touchpoints,"WebSession":sessions,"Lead":leads,"Opportunity":opps,"Order":orders,"CostRecord":costs,"EventHistory":events}
+        tables = {
+        "Channel": channels,
+        "Campaign": campaigns,
+        "Creative": creatives,
+        "Audience": audiences,
+        "Contact": contacts,
+        "CampaignAudience": campaud,
+        "Touchpoint": touchpoints,
+        "WebSession": sessions,
+        "Lead": leads,
+        "Opportunity": opps,
+        "Order": orders,
+        "CostRecord": costs,
+        "EventHistory": events
+    }
+
+    # Chronological 80/20 split based on opportunity creation date.
+    sorted_opps = sorted(
+        opps,
+        key=lambda x: (x["created_at"], x["opportunity_id"])
+    )
+
+    split_index = int(len(sorted_opps) * 0.8)
+
+    # Use a timestamp boundary so identical timestamps stay together.
+    if sorted_opps and split_index < len(sorted_opps):
+        split_timestamp = sorted_opps[split_index]["created_at"]
+
+        train_opps = [
+            o for o in sorted_opps
+            if o["created_at"] < split_timestamp
+        ]
+
+        test_opps = [
+            o for o in sorted_opps
+            if o["created_at"] >= split_timestamp
+        ]
+    else:
+        train_opps = sorted_opps
+        test_opps = []
+
+    # Export chronological training and testing datasets.
+    write_csv(out / "Opportunity_train.csv", train_opps)
+    write_csv(out / "Opportunity_test.csv", test_opps)
+
+    # Export a record of each opportunity's split assignment.
+    train_ids = {o["opportunity_id"] for o in train_opps}
+
+    split_rows = [
+        {
+            "opportunity_id": o["opportunity_id"],
+            "created_at": o["created_at"],
+            "split": "train" if o["opportunity_id"] in train_ids else "test"
+        }
+        for o in sorted_opps
+    ]
+
+    write_csv(out / "opportunity_split.csv", split_rows)
+
+    # Validate chronological ordering.
+    if train_opps and test_opps:
+        assert max(o["created_at"] for o in train_opps) < min(
+            o["created_at"] for o in test_opps
+        ), "Chronological split validation failed"
     # Export CSVs and a JSON bundle.
     for name,rows in tables.items(): write_csv(out/f"{name}.csv",rows)
     (out/"ground_truth.json").write_text(json.dumps(ground,indent=2))
     # Attribution models, based on eligible touches up to won order date.
-    by_contact=defaultdict(list)
-    for t in touchpoints: by_contact[t["contact_id"]].append(t)
-    results=[]; calc=iso(BASE_DATE+timedelta(days=800))
-    revenue_by_opp={}
+    by_contact = defaultdict(list)
+
+    for t in touchpoints:
+        by_contact[t["contact_id"]].append(t)
+
+    results = []
+    calc = iso(datetime(2026, 10, 31, tzinfo=timezone.utc))
+    revenue_by_opp = {}
     # Deduplicate orders using external reference, and keep USD revenue only.
     for order in orders:
         if order["issue_type"] or order["currency"]!="USD": continue

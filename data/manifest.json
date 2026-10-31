@@ -1,7 +1,7 @@
 {
   "seed": 20261022,
   "scale": "full",
-  "generated_at_utc": "2027-03-12T00:00:00Z",
+  "generated_at_utc": "2026-10-31T00:00:00Z",
   "counts": {
     "Channel": 9,
     "Campaign": 500,
@@ -19,8 +19,8 @@
     "AttributionResult": 50198
   },
   "files": {
-    "attribution.db": "3080b9576a1f4968b6996a786900beaeded8033ee7b1f96d0149a0648e4f8cd7",
-    "AttributionResult.csv": "63d92d9700f804ed58387c45db8a059cd292aed75ccf3a49526976dd24620ee6",
+    "attribution.db": "64f9255a336820af9f25b5c4c362ae29b56cf47307b798bf51fe7ad9065d4d1c",
+    "AttributionResult.csv": "9d9f4cdcd4717302a2f15fb9b07fc5987afe0fdfdd0ae2ea08f6418ef2f1a24a",
     "Audience.csv": "13508910ebd6ab8c9957ad54e965047ecb8dc5467111923bdf125d8a611d88b1",
     "Campaign.csv": "637f8fb3b867b2e717ff27170b97198caa0ece08f5f5a7921f816d444730c0b3",
     "CampaignAudience.csv": "052de36f61534e427bf5ebeecb7efa6e4e83ad47d78c7498464004d3548f71e7",
@@ -32,6 +32,9 @@
     "ground_truth.json": "b1277bce6bc67141b4f095a59f27b59dbada5299914912bd7182021e943a9a56",
     "Lead.csv": "1f3c4f35e54fcd4c3d6ffdfd8b5080140f6f441af37ccb75922e7ca64fcb9179",
     "Opportunity.csv": "af13817a25e563efc760ab407ce7c30664821270ba99dac7c1d1ba2dca841d33",
+    "opportunity_split.csv": "85e4bb75561fe06fb02d8c3c663f22c8e5c9eec0066c357e973a0648db694c32",
+    "Opportunity_test.csv": "f7b6e461e974cd1e284f8a695d360d2df6c5564f4009deaab0e17706ded8b76d",
+    "Opportunity_train.csv": "9489f6561a6c4299491b1f864af6aff63e42dfe32c452de96e780e117f650aac",
     "Order.csv": "9cfab5307a99337c7542b580ace9cff38a47604df4fcc584bdcb4c73a6b296f4",
     "Touchpoint.csv": "4f73b4cf2821a39678e440ef923e7bd7bea0543899c12d42ac1ed3ab43af61f5",
     "WebSession.csv": "9f87d56582454d949a8d6786a73e3a9d5db049617045b9446703ff070e65c865"
